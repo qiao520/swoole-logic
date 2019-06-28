@@ -7,15 +7,16 @@ use ReflectionClass;
 
 class Validator
 {
-
     public static $validators;
+
+    const INTEGER_PATTERN = '/^[+-]?\d+$/';
 
     public static function validate($name, $value, $options = [])
     {
         // [['user_id', 'mileage'], 'required']
         $method = self::getValidateMethodName($name);
         if (!$method) {
-            throw new InvalidRuleException("验证器（{$name}）不存在");
+            throw new InvalidRuleException("Validator which name of {$name} does not exist!");
         }
 
         return self::{$method}($value, $options);
@@ -61,27 +62,69 @@ class Validator
     /**
      * 验证是否必填
      * @param $value
-     * @param $options
      * @return bool|string
      */
-    public static function validateRequired($value, $options)
+    public static function validateRequired($value)
     {
         if (is_null($value) || $value === '') {
-            return $options['message'] ?? '不能为空';
+            return false;
         }
 
         return true;
     }
 
+    /**
+     * 验证是否是整数
+     * @param $value
+     * @param $options
+     * @return bool
+     */
     public static function validateInteger($value, $options)
     {
+        // 默认是必填的
+        if (self::checkIsCanEmpty($value, $options)) {
+            return true;
+        }
+
+        if (is_integer($value) || (is_string($value) && preg_match(self::INTEGER_PATTERN, $value)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function checkIsCanEmpty($value, $options)
+    {
+        // 默认是非必填的
+        $isRequired = $options['isRequired'] ?? true;
+
+        if ((is_null($value) || $value === '') && !$isRequired) {
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public static function validateNumber($value, $options)
+    {
+        // 默认是必填的
+        if (self::checkIsCanEmpty($value, $options)) {
+            return true;
+        }
+
+        if (is_integer($value) || (is_string($value) && preg_match(self::INTEGER_PATTERN, $value)))
+        {
+            return true;
+        }
+
         if (is_null($value) || $value === '') {
-            return $options['message'] ?? '不能为空';
+            return false;
         }
 
         return true;
     }
-
 
 
 }

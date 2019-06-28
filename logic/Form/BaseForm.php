@@ -3,11 +3,16 @@ declare(strict_types=1);
 
 namespace Logic\Form;
 
+use Logic\Validate\Validator;
 use ReflectionClass;
 
 abstract class BaseForm
 {
+    // 默认是都不必填的
+    public $defaultRequired;
+
     protected $errorMessage;
+    protected $isAutoTrim = true;
 
     private $_name;
 
@@ -35,12 +40,14 @@ abstract class BaseForm
     /**
      * 根据参数数据实例化Form
      * @param $data
+     * @param $defaultRequired
      * @return BaseForm
      */
-    public static function instance($data) {
+    public static function instance($data, $defaultRequired = false) {
 
         $form = new static();
         $form->setAttributes($data);
+        $form->defaultRequired = $defaultRequired;
 
         return $form;
     }
@@ -55,7 +62,7 @@ abstract class BaseForm
             $attributes = $this->attributes();
             foreach ($values as $name => $value) {
                 if (isset($attributes[$name])) {
-                    $this->{$name} = $value;
+                    $this->{$name} = $this->isAutoTrim ? trim($value) : $value;
                 }
             }
         }
@@ -67,18 +74,27 @@ abstract class BaseForm
      */
     public function validate()
     {
-        $validateParams = $this->getValidateParams();
+        $validateRules = $this->getValidateRules();
 
-        foreach ($validateParams as $params) {
+        foreach ($validateRules as $validateRule) {
+
+            // 判断是否为空，并且允许为空，直接返回，验证通过
+            if (Validator::checkIsCanEmpty($validateRule->value, $validateRule->options)) {
+                continue;
+            }
 
             // 优先找自定义验证器
-            $customValidator = $this->getCustomValidator($params[0]);
+            $customValidator = $this->getCustomValidator($validateRule->validate);
             if ($customValidator) {
 
             } else {
-                $validateResult = call_user_func_array(['Validator', 'validate'], $params);
-                if (!$validateResult->status) {
-                    $this->errorMessage = '';
+                $isValid = Validator::validate(
+                    $validateRule->validate,
+                    $validateRule->value,
+                    $validateRule->options
+                );
+                if (!$isValid) {
+                    $this->errorMessage = $validateRule->message;
                     return false;
                 }
             }
@@ -136,7 +152,7 @@ abstract class BaseForm
      * 根据验证规则生成验证器的参数
      * @return array|mixed
      */
-    public function getValidateParams()
+    public function getValidateRules()
     {
         $name = $this->getName();
 
@@ -156,13 +172,24 @@ abstract class BaseForm
 
             $properties   = (array) array_shift($rule);
             $validateName = (string) array_shift($rule);
+            $message      = $rule['message'] ?? '格式错误';
+            if (!isset($rule['isRequired'])) {
+                $rule['isRequired'] = $this->defaultRequired;
+            }
 
             foreach ($properties as $property) {
                 if (!isset($attributes[$property])) {
                     throw new InvalidRuleException(sprintf('属性%s不存在', $property));
                 }
 
-                $validateRules[] = [$validateName, $this->{$property}, $rule];
+                $validateRule = new \stdClass();
+                $validateRule->property = $property;
+                $validateRule->validate = $validateName;
+                $validateRule->value    = $this->{$property};
+                $validateRule->message  = $message;
+                $validateRule->options  = $rule;
+
+                $validateRules[] = $validateRule;
             }
         }
 
