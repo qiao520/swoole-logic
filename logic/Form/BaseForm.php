@@ -76,7 +76,7 @@ abstract class BaseForm
     {
         $validateRules = $this->getValidateRules();
 
-        foreach ($validateRules as $validateRule) {
+        foreach ($validateRules as $property => $validateRule) {
 
             // 判断是否为空，并且允许为空，直接返回，验证通过
             if (Validator::checkIsCanEmpty($validateRule->value, $validateRule->options)) {
@@ -86,11 +86,19 @@ abstract class BaseForm
             // 优先找自定义验证器
             $customValidator = $this->getCustomValidator($validateRule->validate);
             if ($customValidator) {
-
+                $isValid = $this->{$customValidator}(
+                    $validateRule->value,
+                    $validateRule->options
+                );
+                if (!$isValid) {
+                    if (!$this->errorMessage) {
+                        $this->errorMessage = $validateRule->message;
+                    }
+                    return false;
+                }
             } else {
                 $isValid = Validator::validate(
-                    $validateRule->validate,
-                    $validateRule->value,
+                    $property,
                     $validateRule->options
                 );
                 if (!$isValid) {
@@ -98,8 +106,6 @@ abstract class BaseForm
                     return false;
                 }
             }
-
-
         }
 
         return true;
@@ -230,7 +236,7 @@ abstract class BaseForm
      * 获取Form类名
      * @return string
      */
-    public  function getName() {
+    public function getName() {
 
         if (is_null($this->_name)) {
             $this->_name = static::class;

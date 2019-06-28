@@ -9,7 +9,9 @@ class Validator
 {
     public static $validators;
 
-    const INTEGER_PATTERN = '/^[+-]?\d+$/';
+    const PATTERN_INTEGER = '/^[+-]?\d+$/';
+    const PATTERN_FLOAT = '/^[+-]?\d+\.?\d+$/';
+    const URL_PATTERN = '/^https?:\/\/(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)(?::\d{1,5})?(?:$|[?\/#])/i';
 
     public static function validate($name, $value, $options = [])
     {
@@ -86,7 +88,7 @@ class Validator
             return true;
         }
 
-        if (is_integer($value) || (is_string($value) && preg_match(self::INTEGER_PATTERN, $value)))
+        if (is_integer($value) || (is_string($value) && preg_match(self::PATTERN_INTEGER, $value)))
         {
             return true;
         }
@@ -94,6 +96,12 @@ class Validator
         return false;
     }
 
+    /**
+     * 验证非必填是否合法
+     * @param $value
+     * @param $options
+     * @return bool
+     */
     public static function checkIsCanEmpty($value, $options)
     {
         // 默认是非必填的
@@ -114,7 +122,11 @@ class Validator
             return true;
         }
 
-        if (is_integer($value) || (is_string($value) && preg_match(self::INTEGER_PATTERN, $value)))
+        if (is_numeric($value) || (
+            is_string($value) &&
+            (preg_match(self::PATTERN_INTEGER, $value) ||
+                preg_match(self::PATTERN_INTEGER, $value))
+            ))
         {
             return true;
         }
