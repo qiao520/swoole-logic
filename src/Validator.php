@@ -43,8 +43,85 @@ class Validator
     const PATTERN_EMAIL = '/^[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/';
 
     /**
-     * 验证是否符合某规则
+     * 判断非必填是否合法
+     * @param $value
+     * @return bool
+     */
+    public static function checkIsEmpty($value)
+    {
+        if ((is_null($value) || $value === '')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 判断最大最小是否合法
      * @param $name
+     * @param $value
+     * @param array $options
+     * @return bool
+     */
+    public static function checkMaxMin($name, $value, $options = [])
+    {
+        switch ($name) {
+            case 'string':
+                return self::checkStringLengthValid($value, $options);
+                break;
+            case 'number':
+            case 'integer':
+                return self::checkNumberSizeValid($value, $options);
+                break;
+        }
+
+        return true;
+    }
+
+    /**
+     * 判断长度是否合法
+     * @param $value
+     * @param $options
+     * @return bool
+     */
+    public static function checkStringLengthValid($value, $options)
+    {
+        $value = (string) $value;
+
+        if (isset($options['min']) && mb_strlen($value) < $options['min']) {
+            return false;
+        }
+
+        if (isset($options['max']) && mb_strlen($value) > $options['max']) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 判断数字大小是否合法
+     * @param $value
+     * @param $options
+     * @return bool
+     */
+    public static function checkNumberSizeValid($value, $options)
+    {
+        if (isset($options['min']) && $value < $options['min']) {
+            return false;
+        }
+
+        if (isset($options['max']) && $value > $options['max']) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * 验证是否符合某规则
+     * @param $name string  验证器名
      * @param $value
      * @param array $options
      * @return mixed
@@ -231,62 +308,6 @@ class Validator
             if (!self::validate($validator, $item, $options)) {
                 return false;
             }
-        }
-
-        return true;
-    }
-
-    /**
-     * 判断非必填是否合法
-     * @param $value
-     * @param $options
-     * @return bool
-     */
-    public static function checkIsCanEmpty($value, $options)
-    {
-        // 默认是非必填的
-        $isRequired = $options['isRequired'] ?? false;
-
-        if ((is_null($value) || $value === '') && !$isRequired) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * 判断长度是否合法
-     * @param $value
-     * @param $options
-     * @return bool
-     */
-    public static function checkStringLengthValid($value, $options)
-    {
-        if (isset($options['min']) && strlen($value) < $options['min']) {
-            return false;
-        }
-
-        if (isset($options['max']) && strlen($value) > $options['max']) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * 判断数字大小是否合法
-     * @param $value
-     * @param $options
-     * @return bool
-     */
-    public static function checkNumberSizeValid($value, $options)
-    {
-        if (isset($options['min']) && $value < $options['min']) {
-            return false;
-        }
-
-        if (isset($options['max']) && $value > $options['max']) {
-            return false;
         }
 
         return true;

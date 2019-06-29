@@ -11,19 +11,37 @@ abstract class BaseForm
      * 是否必填的默认设置
      * @var bool
      */
-    public $defaultRequired;
+    protected $defaultRequired;
 
     /**
-     * 验证不合法的错误提示信息
+     * 默认的错误提示信息
      * @var string
      */
-    protected $errorMessages = [];
+    protected $defaultErrorMessage = '{attribute}格式错误';
+
+    /**
+     * 默认的必填错误提示信息
+     * @var string
+     */
+    protected $defaultRequiredMessage = '{attribute}是必填项';
+
+    /**
+     * 默认的范围错误提示信息
+     * @var string
+     */
+    protected $defaultMaxMinMessage = '{attribute}必须在{min} ~ {max}范围内';
 
     /**
      * 是否自动对值进行trim
      * @var bool
      */
     protected $isAutoTrim = true;
+
+    /**
+     * 验证不合法的错误提示信息
+     * @var array
+     */
+    private $errorMessages = [];
 
     /**
      * 子类名称
@@ -54,7 +72,6 @@ abstract class BaseForm
      * @var
      */
     private static $_validators;
-    
 
     /**
      * 定义验证规则
@@ -65,7 +82,7 @@ abstract class BaseForm
     }
 
     /**
-     * 逻辑业务处理
+     * 逻辑业务处理（子类需自行实现）
      * @return mixed  返回处理结果
      */
     public abstract function handle();
@@ -142,14 +159,27 @@ abstract class BaseForm
     {
         $validateRules = $this->getValidateRules();
 
-        foreach ($validateRules as $validateRule) {
+        /**
+         * @var $validateRule FormValidateRule
+         */
+        foreach ($validateRules as $validateRule)
+        {
+            $value       =  $this->{$validateRule->attribute};
+            $isEmpty     =  Validator::checkIsEmpty($value);
+            $isRequired  =  $validateRule->isRequired || $this->defaultRequired;
 
-            // 判断是否为空，并且允许为空，直接返回，验证通过
-            if (Validator::checkIsCanEmpty($validateRule->value, $validateRule->options)) {
+            // 校验必填项，如果是非必填项，且值为空，验证通过
+            if (!$isRequired && $isEmpty) {
                 continue;
             }
 
-            // 优先找自定义验证器
+            // 校验必填项，如果是必填项，且值为空，验证不通过
+            if ($isRequired && !$isEmpty) {
+                $this->addError($validateRule->attribute, $validateRule->requiredMessage);
+                return false;
+            }
+
+            // 优先找自定义验证器进行校验
             $customValidator = $this->getCustomValidator($validateRule->validate);
             if ($customValidator) {
                 $isValid = $this->{$customValidator}(
@@ -157,18 +187,23 @@ abstract class BaseForm
                     $validateRule->options
                 );
                 if (!$isValid) {
+                    // 自定义验证器，自行添加错误信息，直接返回校验失败
                     return false;
                 }
             } else {
-                $isValid = Validator::validate(
-                    $validateRule->validate,
-                    $validateRule->value,
-                    $validateRule->options
-                );
+                $isValid = Validator::validate($validateRule->validate, $value, $validateRule->options);
                 if (!$isValid) {
-
-                    $this->errorMessages[$validateRule->attribute] = $validateRule->message;
+                    $this->addError($validateRule->attribute, $validateRule->message);
                     return false;
+                }
+
+                // 校验大小
+                if ($validateRule->isMaxMin) {
+                    $isValid = Validator::checkMaxMin($validateRule->validate, $value, $validateRule->options);
+                    if (!$isValid) {
+                        $this->addError($validateRule->attribute, $validateRule->maxMinMessage);
+                        return false;
+                    }
                 }
             }
         }
@@ -176,6 +211,14 @@ abstract class BaseForm
         return true;
     }
 
+    /**
+     * 添加一条错误信息
+     * @param $attribute
+     * @param $message
+     */
+    protected function addError($attribute, $message) {
+        $this->errorMessages[$attribute] = $message;
+    }
     /**
      * 获取第一条错误信息
      * @return string
@@ -186,7 +229,7 @@ abstract class BaseForm
 
     /**
      * 获取所有错误信息
-     * @return string
+     * @return array
      */
     public function getErrors() {
         return $this->errorMessages;
@@ -229,7 +272,7 @@ abstract class BaseForm
 
     /**
      * 根据验证规则生成验证器的参数
-     * @return array|mixed
+     * @return array
      * @throws InvalidLogicException
      */
     public function getValidateRules()
@@ -241,6 +284,18 @@ abstract class BaseForm
             return self::$_validateRulesMap[$name];
         }
 
+        $validateRules = $this->initValidateRules();
+
+        return self::$_validateRulesMap[$name] = $validateRules;
+    }
+
+    /**
+     * 初始化类的验证规则配置（每个类只需初始化一次）
+     * @return array
+     * @throws InvalidLogicException
+     */
+    private function initValidateRules ()
+    {
         $rules = $this->rules();
         $attributes = $this->attributes();
 
@@ -253,9 +308,17 @@ abstract class BaseForm
 
             $properties   = (array) array_shift($rule);
             $validateName = (string) array_shift($rule);
-            if (!isset($rule['isRequired'])) {
-                $rule['isRequired'] = $this->defaultRequired;
-            }
+
+            // 是否必填
+            $isRequired = $rule['isRequired'] ?? false;
+
+            // 错误提示信息
+            $errorMessage   = $rule['message'] ?? $this->defaultErrorMessage;
+            $maxMinMessage  = $rule['maxMinMessage'] ?? $this->defaultMaxMinMessage;
+            $requireMessage = $rule['requireMessage'] ?? $this->defaultRequiredMessage;
+
+            // 是否有最大最小规则
+            $isMaxMin = isset($rule['min']) || isset($rule['max']);
 
             foreach ($properties as $attribute)
             {
@@ -263,29 +326,25 @@ abstract class BaseForm
                     throw new InvalidLogicException(sprintf('属性%s不存在', $attribute));
                 }
 
-                // 错误提示信息
-                $attributeName = $this->getAttributeName($attribute);
-                if (isset($rule['message'])) {
-                    $message = str_replace('{attribute}', $attributeName, $rule['message']);
-                } else {
-                    $message = $attributeName . Validator::getValidateMessage($validateName);
-                }
+                $validateRule = new FormValidateRule();
+                $validateRule->attribute  = $attribute;
+                $validateRule->validate   = $validateName;
+                $validateRule->isRequired = $isRequired;
+                $validateRule->isMaxMin   = $isMaxMin;
+                $validateRule->options    = $rule;
+                $validateRule->message    = $this->formatMessage($attribute, $errorMessage, $rule);
+                $validateRule->requiredMessage = $this->formatMessage($attribute, $requireMessage, $rule);
 
-                $validateRule = new \stdClass();
-                $validateRule->attribute = $attribute;
-                $validateRule->validate = $validateName;
-                $validateRule->value    = $this->{$attribute};
-                $validateRule->message  = $message;
-                $validateRule->options  = $rule;
+                if ($isMaxMin) {
+                    $validateRule->maxMinMessage   = $this->formatMessage($attribute, $maxMinMessage, $rule);
+                }
 
                 $validateRules[] = $validateRule;
             }
         }
 
-        return self::$_validateRulesMap[$name] = $validateRules;
+        return $validateRules;
     }
-
-
 
     /**
      * 获取验证类公共属性
@@ -326,5 +385,32 @@ abstract class BaseForm
         }
 
         return $this->_name;
+    }
+
+    /**
+     * 格式化错误提示消息
+     * @param $attribute
+     * @param $message
+     * @param array $options
+     * @return mixed
+     */
+    protected function formatMessage($attribute, $message, $options = [])
+    {
+        $attributeName = $this->getAttributeName($attribute);
+        $message = str_replace('{attribute}', $attributeName, $message);
+
+        foreach ($options as $option => $value) {
+            if (is_array($value)) {
+                $value = implode(',', $value);
+            } else if (is_numeric($value)) {
+                $value = (string) $value;
+            }
+
+            if (is_string($option) && is_string($value)) {
+                $message = str_replace(sprintf('{%s}', $option), $value, $message);
+            }
+        }
+
+        return $message;
     }
 }

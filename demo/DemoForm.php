@@ -14,7 +14,7 @@ class DemoForm extends BaseForm
     public function rules()
     {
         return [
-            ['name', 'string', 'message' => '名字必须在6~30个字符范围内'],
+            ['name', 'string', 'message' => '名字必填', 'min' => 6, 'max' => 10, 'maxMinMessage' => '名字必须在6~10个字符范围内'],
             ['age', 'integer'],
             ['sex', 'in', 'in' => [1, 2],],
         ];
@@ -23,7 +23,7 @@ class DemoForm extends BaseForm
     public function attributeLabels()
     {
         return [
-            'sex' => '性别',
+            'name' => '性别',
         ];
     }
 
