@@ -2,7 +2,7 @@
     "name": "qiao520/swoole-logic",
     "description": "Logic layer for swoole framework",
     "type": "library",
-    "license": "GPL",
+    "license": "MIT",
     "authors": [
         {
             "name": "roers",
