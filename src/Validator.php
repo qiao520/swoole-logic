@@ -125,13 +125,13 @@ class Validator
      * @param $value
      * @param array $options
      * @return mixed
-     * @throws InvalidLogicException
+     * @throws LogicException
      */
     public static function validate($name, $value, $options = [])
     {
         $method = self::getValidateMethodName($name);
         if (!$method) {
-            throw new InvalidLogicException("Validator which name of {$name} does not exist!");
+            throw new LogicException("验证器 {$name} 不存在");
         }
 
         return self::{$method}($value, $options);
@@ -326,9 +326,7 @@ class Validator
 
         // 从缓存读取
         if (!is_null(self::$validators)) {
-            if (isset(self::$validators[$name])) {
-                return self::$validators[$name];
-            }
+            return self::$validators[$name] ?? '';
         }
 
         try {
@@ -357,6 +355,6 @@ class Validator
 
     public static function getValidateMessage($validator)
     {
-        return self::$validatorMessages[$validator] ?? '格式错误';
+        return self::$validatorMessages[$validator] ?? '';
     }
 }

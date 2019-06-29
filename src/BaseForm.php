@@ -167,22 +167,24 @@ abstract class BaseForm
             $value       =  $this->{$validateRule->attribute};
             $isEmpty     =  Validator::checkIsEmpty($value);
             $isRequired  =  $validateRule->isRequired || $this->defaultRequired;
-
+            $validator   =  $validateRule->validate;
+            
             // 校验必填项，如果是非必填项，且值为空，验证通过
             if (!$isRequired && $isEmpty) {
                 continue;
             }
 
             // 校验必填项，如果是必填项，且值为空，验证不通过
-            if ($isRequired && !$isEmpty) {
+            if ($isRequired && $isEmpty) {
                 $this->addError($validateRule->attribute, $validateRule->requiredMessage);
                 return false;
             }
 
             // 优先找自定义验证器进行校验
-            $customValidator = $this->getCustomValidator($validateRule->validate);
+            $customValidator = $this->getCustomValidator($validator);
             if ($customValidator) {
-                $isValid = $this->{$customValidator}(
+                $isValid = call_user_func(
+                    [$this, $customValidator], 
                     $validateRule->attribute,
                     $validateRule->options
                 );
@@ -191,7 +193,7 @@ abstract class BaseForm
                     return false;
                 }
             } else {
-                $isValid = Validator::validate($validateRule->validate, $value, $validateRule->options);
+                $isValid = Validator::validate($validator, $value, $validateRule->options);
                 if (!$isValid) {
                     $this->addError($validateRule->attribute, $validateRule->message);
                     return false;
@@ -199,7 +201,7 @@ abstract class BaseForm
 
                 // 校验大小
                 if ($validateRule->isMaxMin) {
-                    $isValid = Validator::checkMaxMin($validateRule->validate, $value, $validateRule->options);
+                    $isValid = Validator::checkMaxMin($validator, $value, $validateRule->options);
                     if (!$isValid) {
                         $this->addError($validateRule->attribute, $validateRule->maxMinMessage);
                         return false;
@@ -273,7 +275,7 @@ abstract class BaseForm
     /**
      * 根据验证规则生成验证器的参数
      * @return array
-     * @throws InvalidLogicException
+     * @throws LogicException
      */
     public function getValidateRules()
     {
@@ -292,7 +294,7 @@ abstract class BaseForm
     /**
      * 初始化类的验证规则配置（每个类只需初始化一次）
      * @return array
-     * @throws InvalidLogicException
+     * @throws LogicException
      */
     private function initValidateRules ()
     {
@@ -303,7 +305,7 @@ abstract class BaseForm
         foreach ($rules as $rule)
         {
             if (!is_array($rule) || count($rule) < 2) {
-                throw new InvalidLogicException('验证规则格式错误');
+                throw new LogicException('验证规则格式错误');
             }
 
             $properties   = (array) array_shift($rule);
@@ -323,7 +325,7 @@ abstract class BaseForm
             foreach ($properties as $attribute)
             {
                 if (!isset($attributes[$attribute])) {
-                    throw new InvalidLogicException(sprintf('属性%s不存在', $attribute));
+                    throw new LogicException(sprintf('属性%s不存在', $attribute));
                 }
 
                 $validateRule = new FormValidateRule();
