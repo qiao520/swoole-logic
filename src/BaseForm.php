@@ -17,7 +17,7 @@ abstract class BaseForm
      * 验证不合法的错误提示信息
      * @var string
      */
-    protected $errorMessage;
+    protected $errorMessages = [];
 
     /**
      * 是否自动对值进行trim
@@ -60,8 +60,7 @@ abstract class BaseForm
      * 定义验证规则
      * @return array
      */
-    public function rules()
-    {
+    public function rules(){
         return [];
     }
 
@@ -158,9 +157,6 @@ abstract class BaseForm
                     $validateRule->options
                 );
                 if (!$isValid) {
-                    if (!$this->errorMessage) {
-                        $this->errorMessage = $validateRule->message;
-                    }
                     return false;
                 }
             } else {
@@ -170,7 +166,8 @@ abstract class BaseForm
                     $validateRule->options
                 );
                 if (!$isValid) {
-                    $this->errorMessage = $validateRule->message;
+
+                    $this->errorMessages[$validateRule->attribute] = $validateRule->message;
                     return false;
                 }
             }
@@ -180,11 +177,19 @@ abstract class BaseForm
     }
 
     /**
-     * 获取错误信息
+     * 获取第一条错误信息
+     * @return string
+     */
+    public function getError() {
+        return reset($this->errorMessages);
+    }
+
+    /**
+     * 获取所有错误信息
      * @return string
      */
     public function getErrors() {
-        return $this->errorMessage;
+        return $this->errorMessages;
     }
 
     /**
@@ -258,7 +263,13 @@ abstract class BaseForm
                     throw new InvalidLogicException(sprintf('属性%s不存在', $attribute));
                 }
 
-                $message = $rule['message'] ?? ($this->getAttributeName($attribute) . '格式错误');
+                // 错误提示信息
+                $attributeName = $this->getAttributeName($attribute);
+                if (isset($rule['message'])) {
+                    $message = str_replace('{attribute}', $attributeName, $rule['message']);
+                } else {
+                    $message = $attributeName . Validator::getValidateMessage($validateName);
+                }
 
                 $validateRule = new \stdClass();
                 $validateRule->attribute = $attribute;

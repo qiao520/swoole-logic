@@ -2,14 +2,14 @@
 require 'vendor/autoload.php';
 
 $data = [
-    'name' => 'Roers',
-    'age' => 'a32',
-    'sex' => 1,
+    'name' => '',
+    'age' => '32',
+    'sex' => '',
 ];
-$form = \Roers\Demo\DemoForm::instance($data);
+$form = \Roers\Demo\DemoForm::instance($data, true);
 if ($form->validate()) {
     $result = $form->handle();
     var_dump($result);
 } else {
-    echo $form->getErrors();
+    var_dump($form->getErrors());
 }

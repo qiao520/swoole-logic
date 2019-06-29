@@ -14,14 +14,23 @@ class DemoForm extends BaseForm
     public function rules()
     {
         return [
-            ['name', 'string'],
+            ['name', 'string', 'message' => '名字必须在6~30个字符范围内'],
             ['age', 'integer'],
-            ['sex', 'in', 'in' => [1, 2]],
+            ['sex', 'in', 'in' => [1, 2],],
+        ];
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'sex' => '性别',
         ];
     }
 
     public function handle()
     {
+
+        // 返回业务处理结果
         return ['name' => $this->name, 'age' => $this->age];
     }
 }

@@ -8,6 +8,23 @@ use ReflectionClass;
 class Validator
 {
     /**
+     * 验证错误提示信息
+     * @var array
+     */
+    public static $validatorMessages = [
+        'string' => '必须是字符串格式',
+        'integer' => '必须是整数格式',
+        'number' => '必须是数字格式',
+        'boolean' => '必须是1或0',
+        'array' => '必须是数组',
+        'in' => '不在可选值范围值',
+        'email' => '不是合法的邮箱地址',
+        'url' => '不是合法的链接地址',
+        'required' => '是必填的',
+        'regex' => '格式不正确',
+    ];
+
+    /**
      * 验证器
      * @var array
      */
@@ -314,5 +331,11 @@ class Validator
         self::$validators = $validators;
 
         return self::getValidateMethodName($name);
+    }
+
+
+    public static function getValidateMessage($validator)
+    {
+        return self::$validatorMessages[$validator] ?? '格式错误';
     }
 }
