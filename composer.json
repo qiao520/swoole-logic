@@ -1,0 +1,23 @@
+{
+    "name": "qiao520/swoole-logic",
+    "description": "Logic layer for swoole framework",
+    "type": "library",
+    "license": "GPL",
+    "authors": [
+        {
+            "name": "roers",
+            "email": "380552499@qq.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Roers\\SwLogic\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Roers\\Demo\\": "demo/"
+        }
+    }
+}

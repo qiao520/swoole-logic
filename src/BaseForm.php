@@ -1,26 +1,60 @@
 <?php
 declare(strict_types=1);
 
-namespace Logic\Form;
+namespace Roers\SwLogic;
 
-use Logic\Validate\Validator;
 use ReflectionClass;
 
 abstract class BaseForm
 {
-    // 默认是都不必填的
+    /**
+     * 是否必填的默认设置
+     * @var bool
+     */
     public $defaultRequired;
 
+    /**
+     * 验证不合法的错误提示信息
+     * @var string
+     */
     protected $errorMessage;
+
+    /**
+     * 是否自动对值进行trim
+     * @var bool
+     */
     protected $isAutoTrim = true;
 
+    /**
+     * 子类名称
+     * @var
+     */
     private $_name;
 
-    private static $_attributes = [];
+    /**
+     * 缓存（子类名称 => 属性）集合的映射
+     * @var array
+     */
+    private static $_attributesMap = [];
 
-    private static $_validateRules = [];
+    /**
+     * 缓存（子类名称 => 属性验证规则）集合的映射
+     * @var array
+     */
+    private static $_validateRulesMap = [];
 
+    /**
+     * 缓存（子类名称 => 属性名称）集合的映射
+     * @var array
+     */
+    private static $_attributeLabelsMap = [];
+
+    /**
+     * 缓存子类自定义的验证器
+     * @var
+     */
     private static $_validators;
+    
 
     /**
      * 定义验证规则
@@ -32,7 +66,7 @@ abstract class BaseForm
     }
 
     /**
-     * 业务处理
+     * 逻辑业务处理
      * @return mixed  返回处理结果
      */
     public abstract function handle();
@@ -62,10 +96,43 @@ abstract class BaseForm
             $attributes = $this->attributes();
             foreach ($values as $name => $value) {
                 if (isset($attributes[$name])) {
-                    $this->{$name} = $this->isAutoTrim ? trim($value) : $value;
+                    $this->{$name} = is_string($value) && $this->isAutoTrim ? trim($value) : $value;
                 }
             }
         }
+    }
+
+    /**
+     * 返回字段与名称的映射数组（子类需重写该方法）
+     * @return array
+     */
+    public function attributeLabels()
+    {
+        return [];
+    }
+
+    /**
+     * 获取当前子类的字段名称数据
+     * @return array|mixed
+     */
+    public function getAttributeLabels()
+    {
+        $name = $this->getName();
+        if (isset(self::$_attributeLabelsMap[$name])) {
+            return self::$_attributeLabelsMap[$name];
+        }
+
+        return self::$_attributeLabelsMap[$name] = $this->attributeLabels();
+    }
+
+    /**
+     * 获取属性名称
+     * @param $attribute
+     * @return string
+     */
+    public function getAttributeName($attribute) 
+    {
+        return $this->getAttributeLabels()[$attribute] ?? ucfirst($attribute);
     }
 
     /**
@@ -76,7 +143,7 @@ abstract class BaseForm
     {
         $validateRules = $this->getValidateRules();
 
-        foreach ($validateRules as $property => $validateRule) {
+        foreach ($validateRules as $validateRule) {
 
             // 判断是否为空，并且允许为空，直接返回，验证通过
             if (Validator::checkIsCanEmpty($validateRule->value, $validateRule->options)) {
@@ -87,7 +154,7 @@ abstract class BaseForm
             $customValidator = $this->getCustomValidator($validateRule->validate);
             if ($customValidator) {
                 $isValid = $this->{$customValidator}(
-                    $validateRule->value,
+                    $validateRule->attribute,
                     $validateRule->options
                 );
                 if (!$isValid) {
@@ -98,7 +165,8 @@ abstract class BaseForm
                 }
             } else {
                 $isValid = Validator::validate(
-                    $property,
+                    $validateRule->validate,
+                    $validateRule->value,
                     $validateRule->options
                 );
                 if (!$isValid) {
@@ -157,41 +225,45 @@ abstract class BaseForm
     /**
      * 根据验证规则生成验证器的参数
      * @return array|mixed
+     * @throws InvalidLogicException
      */
     public function getValidateRules()
     {
         $name = $this->getName();
 
         // 缓存在类属性，不用每次实例化后执行一次
-        if (isset(self::$_validateRules[$name])) {
-            return self::$_validateRules[$name];
+        if (isset(self::$_validateRulesMap[$name])) {
+            return self::$_validateRulesMap[$name];
         }
 
         $rules = $this->rules();
         $attributes = $this->attributes();
 
         $validateRules = [];
-        foreach ($rules as $rule) {
-            if (!is_array($rule) || count_chars($rule) < 2) {
-                throw new InvalidRuleException('验证规则格式错误');
+        foreach ($rules as $rule)
+        {
+            if (!is_array($rule) || count($rule) < 2) {
+                throw new InvalidLogicException('验证规则格式错误');
             }
 
             $properties   = (array) array_shift($rule);
             $validateName = (string) array_shift($rule);
-            $message      = $rule['message'] ?? '格式错误';
             if (!isset($rule['isRequired'])) {
                 $rule['isRequired'] = $this->defaultRequired;
             }
 
-            foreach ($properties as $property) {
-                if (!isset($attributes[$property])) {
-                    throw new InvalidRuleException(sprintf('属性%s不存在', $property));
+            foreach ($properties as $attribute)
+            {
+                if (!isset($attributes[$attribute])) {
+                    throw new InvalidLogicException(sprintf('属性%s不存在', $attribute));
                 }
 
+                $message = $rule['message'] ?? ($this->getAttributeName($attribute) . '格式错误');
+
                 $validateRule = new \stdClass();
-                $validateRule->property = $property;
+                $validateRule->attribute = $attribute;
                 $validateRule->validate = $validateName;
-                $validateRule->value    = $this->{$property};
+                $validateRule->value    = $this->{$attribute};
                 $validateRule->message  = $message;
                 $validateRule->options  = $rule;
 
@@ -199,7 +271,7 @@ abstract class BaseForm
             }
         }
 
-        return self::$_validateRules[$name] = $validateRules;
+        return self::$_validateRulesMap[$name] = $validateRules;
     }
 
 
@@ -211,8 +283,8 @@ abstract class BaseForm
     public function attributes()
     {
         $name = $this->getName();
-        if (isset(self::$_attributes[$name])) {
-            return self::$_attributes[$name];
+        if (isset(self::$_attributesMap[$name])) {
+            return self::$_attributesMap[$name];
         }
 
         try {
@@ -221,15 +293,15 @@ abstract class BaseForm
             return [];
         }
 
-        $propertyNames = [];
-        foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
-            if (!$property->isStatic()) {
-                $propertyName = $property->getName();
-                $propertyNames[$propertyName] = $propertyName;
+        $attributeNames = [];
+        foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC) as $attribute) {
+            if (!$attribute->isStatic()) {
+                $attributeName = $attribute->getName();
+                $attributeNames[$attributeName] = $attributeName;
             }
         }
 
-        return self::$_attributes[$name] = $propertyNames;
+        return self::$_attributesMap[$name] = $attributeNames;
     }
 
     /**
