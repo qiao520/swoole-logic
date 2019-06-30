@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * 验证器
+ * @desc 为了简单并性能最大化，该验证器，只对数据进行校验是否合法，不做其他处理
+ * @author Roers
+ * @email 380552499@qq.com
+ */
 namespace Roers\SwLogic;
 
 use ReflectionClass;

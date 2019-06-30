@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Logic层业务逻辑表单基类
+ * @desc 对业务逻辑进行抽离，以简化控制器的代码简洁
+ * @author Roers
+ * @email 380552499@qq.com
+ */
 namespace Roers\SwLogic;
 
 use ReflectionClass;

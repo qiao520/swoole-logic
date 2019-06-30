@@ -11,9 +11,14 @@ class DemoForm extends BaseForm
     public $age;
     public $sex;
 
+    /**
+     * 定义验证规则
+     * @return array
+     */
     public function rules()
     {
         return [
+            // 验证6到30个字符的字符串
             ['name', 'string', 'min' => 6, 'max' => 30, 'maxMinMessage' => '名字必须在{min}~{max}个字符范围内'],
             // 验证年龄必须是整数
             ['age', 'integer', 'min' => 18, 'max' => 100],
@@ -26,6 +31,10 @@ class DemoForm extends BaseForm
         ];
     }
 
+    /**
+     * 字段名称映射关系
+     * @return array
+     */
     public function attributeLabels()
     {
         return [
