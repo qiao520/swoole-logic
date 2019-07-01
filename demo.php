@@ -12,6 +12,8 @@ $data = [
     'name' => 'zhongdalong',
     'age' => '31',
     'sex' => '',
+    'email' => 'demo@roers.cn',
+    'others' => ['a', 'b', 'c']
 ];
 // 演示默认所有字段为非必填项
 $form = DemoForm::instance($data);

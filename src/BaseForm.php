@@ -124,6 +124,25 @@ abstract class BaseForm
         }
     }
 
+
+    /**
+     * 获取所有属性值
+     * @return array
+     */
+    public function getAttributes()
+    {
+        $attributes = $this->attributes();
+
+        $values = [];
+        foreach ($attributes as $name => $value) {
+            if (isset($attributes[$name])) {
+                $values[$name] = $this->{$name};
+            }
+        }
+
+        return $values;
+    }
+
     /**
      * 返回字段与名称的映射数组（子类需重写该方法）
      * @return array
@@ -421,4 +440,13 @@ abstract class BaseForm
 
         return $message;
     }
+
+    /**
+     * 设置是否自动对每个自动数据去掉前后空格
+     * @param $status
+     */
+    public function setIsAutoTrim($status) {
+        $this->isAutoTrim = $status;
+    }
+
 }
