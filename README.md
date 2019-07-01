@@ -1,11 +1,9 @@
 # 项目概述
 
-为swoole框架设计的务逻辑封装组件，将业务代码抽离出来以减少控制器代码量、代码重载，同时封装了高性能表单数据验证。
+为swoole框架设计的业务逻辑封装组件，将业务代码抽离出来以减少控制器代码量、业务代码可热重载，封装了高性能表单数据验证。
 
 我们可以这么理解，一个请求是一个业务，一个业务会对应由一个Form表单类去封装处理。
 一个健全的系统少不了请求参数数据验证、易维护性。这个组件就是为了帮您轻松做这些事情。
-
-# 什么是swoole-logic组件
 
 主要是解决如下2个问题：
   - Logic层热加载，修改业务代码后不用重启服务能立即生效
@@ -20,13 +18,9 @@
 这个Logic层不会在框架服务启动时加载，是在Work进程启动后加载的。
 为什么要这样呢，因为我利用swoole的$server->reload();接口来重载这个目录下的代码，而不是重启服务。
 
-主要的实现步骤
+操作步骤
 - 首先，我在项目根目录下新建一个logic目录作为业务逻辑层（Logic），这个目录不受框架启动时加载
 - 开发一个接口，用于业务代码修改后，调用swoole的$server->reload()重载Work进程，让修改代码也跟着一起重新加载
-
-结合现有框架使用该组件
-- Hyperf框架结合swoole-logic组件的演示代码：https://github.com/qiao520/hyperf-skeleton
-- IMI框架结合swoole-logic组件的演示代码：https://github.com/qiao520/imi-logic
 
 # 现有的验证器有如下几种
 
@@ -72,6 +66,11 @@ $form->validate();
 ```
 $form->getError();
 ```
+
+# 结合框架使用该组件
+
+- Hyperf框架结合swoole-logic组件的演示代码：https://github.com/qiao520/hyperf-skeleton
+- IMI框架结合swoole-logic组件的演示代码：https://github.com/qiao520/imi-logic
 
 
 # 表单验证使用示例
