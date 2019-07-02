@@ -1,4 +1,5 @@
-# Swoole框架业务封装组件 （Logic package component for Swoole）
+# Swoole框架业务封装组件 | Logic component for Swoole
+
 
 ## Document
 
