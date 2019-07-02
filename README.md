@@ -1,21 +1,25 @@
-# Swoole框架业务逻辑封装组件
+# Swoole框架业务封装组件 （Swoole framework logic package component）
+
+## Document
+
+- 中文
+- **[English](README_EN.md)**
 
 ## 介绍
 
-将业务代码抽离出来作为Logic层（Form和Validate）
-
-封装了高效率的表单数据验证规则
+将业务代码抽离封装到一个目录下作为Logic层（Form和Validate）
 
 热加载，修改业务代码后不用重启服务能立即生效
 
 减少控制器代码量，结构清晰易维护
 
+封装了高效率的表单数据验证规则
 
 ## 如何解决热加载
 
-我们平时开发调试时大部分都是在调试业务逻辑代码，所以我将业务逻辑封装在Logic层（独立一个目录，目录名自定义）。
+我们平时开发调试时大部分都是在调试业务逻辑代码，所以我将业务逻辑封装在一个目录下（独立一个目录，目录名自定义）。
 
-这个Logic层的PHP文件不会在框架服务启动时加载，是在Work进程启动后加载的。
+这个Logic层的PHP文件不会在框架服务（swoft、imi、easyswoole、hyperf等）启动时加载，会在Work进程启动后加载的。
 
 写一个接口（调用swoole的$server->reload()）来重载Work进程，而不是重启服务，每次改完业务代码，请求下这个接口即可让代码重载生效。
 
@@ -24,10 +28,10 @@
 
 - 通过请求数据实例化表单：
 ```
-$form = DemoForm::instance($data, false); 
+$form = DemoForm::instance($data); 
 ```
 
-- 通过请求数据实例化表单，并默认对所有字段设置为必填）：
+- 通过请求数据实例化表单，并默认对所有字段设置为必填：
 ```
 $form = DemoForm::instance($data, true);
 ```
@@ -75,7 +79,7 @@ $form->getError();
 
 ## Form表单验证使用示例
 
-本人对Yii比较喜欢，也对它有一定的了解，这个组件主要是参考了Yii的表单验证。
+本人对Yii比较喜欢，也对它有一定的了解，这个组件主要是参考了Yii的表单验证用法。
 如果你有Yii的开发经验，用起来会很顺手。
 
 - Form类示例代码（/demo/DemoForm.php）
@@ -251,6 +255,10 @@ debug(str_repeat('-------', 10));
 - 首先，我在项目根目录下新建一个logic目录作为业务逻辑层（Logic），这个目录不受框架启动时加载
 
 - 开发一个接口，用于业务代码修改后，调用swoole的$server->reload()重载Work进程，让修改代码也跟着一起重新加载
+
+## 环境要求
+
+1. PHP 7.0 +
 
 ## 想法初衷
 
