@@ -1,4 +1,4 @@
-# Swoole framework logic package component
+# Logic package component for Swoole framework
 
 ## Document
 
@@ -21,12 +21,12 @@ As we all know, most of our development time is spent debugging business logic c
 
 This Logic layer PHP file will not be loaded when the framework service (swoft, imi, easyswoole, hyperf, etc.) starts, but will be loaded when the Work process starts.
 
-写一个接口（调用swoole的$server->reload()）来重载Work进程记载Logic层的代码，而不是重启服务，每次改完业务代码，请求下这个接口即可让代码重载生效。
 Then, write an interface for call swoole's $server->reload() to reload the Work process's code, instead of restarting the service. 
 
 Every time you change the business code, request this interface to make the code reload Work.
 
-## API of Form class
+
+## API of form class
 
 - Instantiate the form by requesting data
 ```
@@ -57,6 +57,7 @@ $form->validate();
 $form->getError();
 ```
 
+
 ## Validation rule
 
 - integer 
@@ -70,6 +71,7 @@ $form->getError();
 - regex 
 - array 
 - custom  hint:You can be customized in the form subclass
+
 
 
 ## Use this component example in conjunction with an existing framework
