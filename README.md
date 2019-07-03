@@ -1,7 +1,7 @@
 # Swoole框架业务封装组件 | Logic component for Swoole
 
 
-## Document
+## Language
 
 - 中文
 - **[English](README_EN.md)**
@@ -10,19 +10,20 @@
 
 将业务代码抽离封装到一个目录下作为Logic层（Form和Validate）
 
-热加载，修改业务代码后不用重启服务能立即生效
+封装了高效率的表单数据验证规则。
 
-减少控制器代码量，结构清晰易维护
+有如下好处：
+- 热加载，修改Logic层代码后不用重启服务能立即生效
+- 减少控制器代码量，结构清晰易维护
 
-封装了高效率的表单数据验证规则
 
-## 如何解决热加载
+## 所谓热加载实现原理
 
 我们平时开发调试时大部分都是在调试业务逻辑代码，所以我将业务逻辑封装在一个目录下（独立一个目录，目录名自定义）。
 
 这个Logic层的PHP文件不会在框架服务（swoft、imi、easyswoole、hyperf等）启动时加载，会在Work进程启动后加载的。
 
-写一个接口（调用swoole的$server->reload()）来重载Work进程，而不是重启服务，每次改完业务代码，请求下这个接口即可让代码重载生效。
+写一个接口（调用swoole的$server->reload()）来重载Work进程，而不是重启服务，每次改完业务代码，请求下这个接口让代码重载生效。
 
 
 ## Form表单类API
@@ -73,9 +74,9 @@ $form->getError();
 
 ## 结合现有框架使用该组件示例
 
-- Hyperf框架结合swoole-logic组件的演示代码：https://github.com/qiao520/hyperf-skeleton
+- Hyperf框架结合swoole-logic组件的演示：https://github.com/qiao520/hyperf-skeleton
 
-- IMI框架结合swoole-logic组件的演示代码：https://github.com/qiao520/imi-logic
+- IMI框架结合swoole-logic组件的演示：https://github.com/qiao520/imi-logic
 
 
 ## Form表单验证使用示例

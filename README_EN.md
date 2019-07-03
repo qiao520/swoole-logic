@@ -15,7 +15,7 @@ Reduce the amount of controller code, the structure is clear and easy to maintai
 
 Encapsulates efficient form data validation rules
 
-## How to solve hot loading
+## Principle of hot loading
 
 As we all know, most of our development time is spent debugging business logic code,So I encapsulate the business Logic in the Logic layer (separate directory, custom directory name).
 

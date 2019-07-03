@@ -2,8 +2,12 @@
 declare(strict_types=1);
 
 /**
+ * Form base classes for the business layer
+ * @desc Abstract the business logic to simplify the code simplicity of the controller
+ *
  * Logic层业务逻辑表单基类
  * @desc 对业务逻辑进行抽离，以简化控制器的代码简洁
+ *
  * @author Roers
  * @email 380552499@qq.com
  */
@@ -14,12 +18,14 @@ use ReflectionClass;
 abstract class BaseForm
 {
     /**
+     * Default setting for whether required or not
      * 是否必填的默认设置
      * @var bool
      */
     protected $defaultRequired;
 
     /**
+     * Default error message
      * 默认的错误提示信息
      * @var string
      */
@@ -50,12 +56,6 @@ abstract class BaseForm
     private $errorMessages = [];
 
     /**
-     * 子类名称
-     * @var
-     */
-    private $_name;
-
-    /**
      * 缓存（子类名称 => 属性）集合的映射
      * @var array
      */
@@ -78,6 +78,13 @@ abstract class BaseForm
      * @var
      */
     private static $_validators;
+
+    /**
+     * 子类名称
+     * @var
+     */
+    private $_name;
+
 
     /**
      * 定义验证规则
@@ -123,7 +130,6 @@ abstract class BaseForm
             }
         }
     }
-
 
     /**
      * 获取所有属性值
@@ -239,30 +245,6 @@ abstract class BaseForm
     }
 
     /**
-     * 添加一条错误信息
-     * @param $attribute
-     * @param $message
-     */
-    protected function addError($attribute, $message) {
-        $this->errorMessages[$attribute] = $message;
-    }
-    /**
-     * 获取第一条错误信息
-     * @return string
-     */
-    public function getError() {
-        return reset($this->errorMessages);
-    }
-
-    /**
-     * 获取所有错误信息
-     * @return array
-     */
-    public function getErrors() {
-        return $this->errorMessages;
-    }
-
-    /**
      * 获取Form类自定义验证器
      * @param $validatorName
      * @return array|string
@@ -350,7 +332,7 @@ abstract class BaseForm
             foreach ($properties as $attribute)
             {
                 if (!isset($attributes[$attribute])) {
-                    throw new LogicException(sprintf('属性%s不存在', $attribute));
+                    throw new LogicException(sprintf('表单%s属性%s未定义', $this->getName(), $attribute));
                 }
 
                 $validateRule = new FormValidateRule();
@@ -402,10 +384,42 @@ abstract class BaseForm
     }
 
     /**
+     * 设置是否自动对每个自动数据去掉前后空格
+     * @param $status
+     */
+    public function setIsAutoTrim($status) {
+        $this->isAutoTrim = $status;
+    }
+
+    /**
+     * 添加一条错误信息
+     * @param $attribute
+     * @param $message
+     */
+    protected function addError($attribute, $message) {
+        $this->errorMessages[$attribute] = $message;
+    }
+    /**
+     * 获取第一条错误信息
+     * @return string
+     */
+    public function getError() {
+        return reset($this->errorMessages);
+    }
+
+    /**
+     * 获取所有错误信息
+     * @return array
+     */
+    public function getErrors() {
+        return $this->errorMessages;
+    }
+
+    /**
      * 获取Form类名
      * @return string
      */
-    public function getName() {
+    protected function getName() {
 
         if (is_null($this->_name)) {
             $this->_name = static::class;
@@ -439,14 +453,6 @@ abstract class BaseForm
         }
 
         return $message;
-    }
-
-    /**
-     * 设置是否自动对每个自动数据去掉前后空格
-     * @param $status
-     */
-    public function setIsAutoTrim($status) {
-        $this->isAutoTrim = $status;
     }
 
 }

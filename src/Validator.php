@@ -14,27 +14,21 @@ use ReflectionClass;
 class Validator
 {
     /**
-     * 验证错误提示信息
+     * 验证器的验证错误提示信息
      * @var array
      */
     public static $validatorMessages = [
-        'string' => '必须是字符串格式',
-        'integer' => '必须是整数格式',
-        'number' => '必须是数字格式',
-        'boolean' => '必须是1或0',
-        'array' => '必须是数组',
-        'in' => '不在可选值范围值',
-        'email' => '不是合法的邮箱地址',
-        'url' => '不是合法的链接地址',
-        'required' => '是必填的',
-        'regex' => '格式不正确',
+        'string'     => '必须是字符串格式',
+        'integer'    => '必须是整数格式',
+        'number'     => '必须是数字格式',
+        'boolean'    => '必须是1或0',
+        'array'      => '必须是数组',
+        'in'         => '不在可选值范围值',
+        'email'      => '不是合法的邮箱地址',
+        'url'        => '不是合法的链接地址',
+        'required'   => '是必填的',
+        'regex'      => '格式不正确',
     ];
-
-    /**
-     * 验证器
-     * @var array
-     */
-    public static $validators;
 
     // 整型正则
     const PATTERN_INTEGER = '/^[+-]?\d+$/';
@@ -47,6 +41,13 @@ class Validator
 
     // Email正则
     const PATTERN_EMAIL = '/^[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&\'*+\\/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/';
+
+    /**
+     * 验证器集
+     * @var array
+     */
+    private static $validators;
+
 
     /**
      * 判断非必填是否合法
@@ -123,7 +124,6 @@ class Validator
 
         return true;
     }
-
 
     /**
      * 验证是否符合某规则
@@ -358,7 +358,11 @@ class Validator
         return self::getValidateMethodName($name);
     }
 
-
+    /**
+     * 获取验证器的格式错误消息提示
+     * @param $validator
+     * @return mixed|string
+     */
     public static function getValidateMessage($validator)
     {
         return self::$validatorMessages[$validator] ?? '';

@@ -13,20 +13,42 @@ use Roers\SwLogic\BaseForm;
 class DemoForm extends BaseForm
 {
     // 以下是表单属性
+    // Here are the form properties
     public $name;
     public $email;
     public $age;
     public $sex;
     public $others;
-    public $default = 0;
+    public $default = 0;  // 设置默认值
+    public $avatar;
+    public $agree;
 
     // 以下是覆盖父类的默认设置
-    protected $isAutoTrim = true;   // 开启自动去空格（默认开启）
-    protected $defaultRequired = true;   // 开启所有属性为必填（默认未开启）
-    protected $defaultErrorMessage = '{attribute}格式错误';  // 覆盖自定义错误提示信息
+    // Here are the default Settings to override the parent class
+    /**
+     * 开启自动去空格（默认开启）
+     * Enable automatic de-whitespace (default)
+     * @var bool
+     */
+    protected $isAutoTrim = true;
+
+    /**
+     * 开启所有属性为必填（默认未开启）
+     * Enable all properties as required (not enabled by default)
+     * @var bool
+     */
+    protected $defaultRequired = true;
+
+    /**
+     * 覆盖自定义错误提示信息
+     * Overrides the custom error message
+     * @var string
+     */
+    protected $defaultErrorMessage = '{attribute}格式错误';
 
     /**
      * 定义验证规则
+     * Define validation rules
      * @return array
      */
     public function rules()
@@ -46,6 +68,11 @@ class DemoForm extends BaseForm
             [['email'], 'email', 'required' => true],
             // 验证是否是数组，并对数组元素进行格式校验
             [['others'], 'array', 'validator' => 'string'],
+            // 验证是否是超链接
+            [['avatar'], 'url'],
+            // 验证超链接是否是jpg图片格式后缀
+            [['avatar'], 'regex', 'pattern' => '/.jpg$/'],
+            [['agree'], 'boolean'],
         ];
     }
 

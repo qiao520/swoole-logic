@@ -9,11 +9,13 @@ function debug($msg) {
 
 // 表单提交的数据
 $data = [
-    'name' => 'zhongdalong',
-    'age' => '31',
-    'sex' => '',
-    'email' => 'demo@roers.cn',
-    'others' => ['a', 'b', 'c']
+    'name'    =>  'zhongdalong',
+    'age'     =>  '31',
+    'sex'     =>  '',
+    'email'   =>  'demo@roers.cn',
+    'others'  =>  ['a', 'b', 'c'],
+    'avatar'  =>  'http://www.roers.cn/upload/demo.jpg',
+    'agree'   =>  1,
 ];
 // 演示默认所有字段为非必填项
 $form = DemoForm::instance($data);
