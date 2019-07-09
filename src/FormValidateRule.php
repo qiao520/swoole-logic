@@ -21,7 +21,7 @@ class FormValidateRule
      * 校验器名
      * @var string
      */
-    public $validate;
+    public $validator;
 
     /**
      * 校验错误提示信息
@@ -52,6 +52,12 @@ class FormValidateRule
      * @var string
      */
     public $isMaxMin;
+
+    /**
+     * 是否是自定义验证器
+     * @var string
+     */
+    public $isCustomValidator;
 
     /**
      * 选项配置

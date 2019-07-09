@@ -72,6 +72,7 @@ class DemoForm extends BaseForm
             [['avatar'], 'url'],
             // 验证超链接是否是jpg图片格式后缀
             [['avatar'], 'regex', 'pattern' => '/.jpg$/'],
+            // 验证是否布尔
             [['agree'], 'boolean'],
         ];
     }

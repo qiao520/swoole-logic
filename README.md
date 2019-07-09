@@ -23,7 +23,7 @@
 
 这个Logic层的PHP文件不会在框架服务（swoft、imi、easyswoole、hyperf等）启动时加载，会在Work进程启动后加载的。
 
-写一个接口（调用swoole的$server->reload()）来重载Work进程，而不是重启服务，每次改完业务代码，请求下这个接口让代码重载生效。
+写一个接口（调用swoole的$server->reload()）来重载Work进程，而不是重启服务，每次改完业务代码，请求下这个接口让代码重载生效（可以在IDE上新增run配置，可以快速请求该接口来重载）。
 
 
 ## Form表单类API
@@ -175,7 +175,7 @@ class DemoForm extends BaseForm
 ```
 require 'vendor/autoload.php';
 
-// 这个是演示表单类
+// 演示表单类
 use Roers\Demo\DemoForm;
 
 // 调试打印函数
@@ -260,7 +260,8 @@ debug(str_repeat('-------', 10));
 
 ## 环境要求
 
-1. PHP 7.0 +
+PHP 7.0 +
+
 
 ## 想法初衷
 
@@ -272,9 +273,11 @@ debug(str_repeat('-------', 10));
 
 一个健全的系统少不了请求参数数据验证、易维护性，这个组件就是为了帮您轻松做这些事情。
 
+
 ## 安装
 
 composer require qiao520/swoole-logic
+
 
 ## 联系我
 

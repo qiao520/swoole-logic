@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Form base classes for the business layer
  * @desc Abstract the business logic to simplify the code simplicity of the controller
  *
- * Logic层业务逻辑表单基类
+ * Logic层业务表单基类
  * @desc 对业务逻辑进行抽离，以简化控制器的代码简洁
  *
  * @author Roers
@@ -77,7 +77,7 @@ abstract class BaseForm
      * 缓存子类自定义的验证器
      * @var
      */
-    private static $_validators;
+    private static $_validatorsMap;
 
     /**
      * 子类名称
@@ -198,24 +198,23 @@ abstract class BaseForm
             $value       =  $this->{$validateRule->attribute};
             $isEmpty     =  Validator::checkIsEmpty($value);
             $isRequired  =  $validateRule->isRequired || $this->defaultRequired;
-            $validator   =  $validateRule->validate;
+            $validator   =  $validateRule->validator;
             
             // 校验必填项，如果是非必填项，且值为空，验证通过
             if (!$isRequired && $isEmpty) {
                 continue;
             }
 
-            // 校验必填项，如果是必填项，且值为空，验证不通过
+            // 校验必填项，如果是必填项，且值为空，验证不通过，添加错误提示信息
             if ($isRequired && $isEmpty) {
                 $this->addError($validateRule->attribute, $validateRule->requiredMessage);
                 return false;
             }
 
-            // 优先找自定义验证器进行校验
-            $customValidator = $this->getCustomValidator($validator);
-            if ($customValidator) {
+            // 自定义验证器
+            if ($validateRule->isCustomValidator) {
                 $isValid = call_user_func(
-                    [$this, $customValidator], 
+                    [$this, $validator],
                     $validateRule->attribute,
                     $validateRule->options
                 );
@@ -254,8 +253,8 @@ abstract class BaseForm
         $name = $this->getName();
 
         // 缓存在类属性，不用每次实例化后执行一次
-        if (isset(self::$_validators[$name])) {
-            return self::$_validators[$name][$validatorName] ?? '';
+        if (isset(self::$_validatorsMap[$name])) {
+            return self::$_validatorsMap[$name][$validatorName] ?? '';
         }
 
         try {
@@ -274,7 +273,7 @@ abstract class BaseForm
             }
         }
 
-        self::$_validators[$name] = $validators;
+        self::$_validatorsMap[$name] = $validators;
 
         return $this->getCustomValidator($validatorName);
     }
@@ -318,6 +317,13 @@ abstract class BaseForm
             $properties   = (array) array_shift($rule);
             $validateName = (string) array_shift($rule);
 
+            // 验证器
+            if ($customValidator = $this->getCustomValidator($validateName)) {
+                $validator = $customValidator;
+            } else {
+                $validator = $validateName;
+            }
+
             // 是否必填
             $isRequired = $rule['isRequired'] ?? false;
 
@@ -337,15 +343,16 @@ abstract class BaseForm
 
                 $validateRule = new FormValidateRule();
                 $validateRule->attribute  = $attribute;
-                $validateRule->validate   = $validateName;
+                $validateRule->validator  = $validator;
                 $validateRule->isRequired = $isRequired;
                 $validateRule->isMaxMin   = $isMaxMin;
                 $validateRule->options    = $rule;
                 $validateRule->message    = $this->formatMessage($attribute, $errorMessage, $rule);
-                $validateRule->requiredMessage = $this->formatMessage($attribute, $requireMessage, $rule);
+                $validateRule->requiredMessage   = $this->formatMessage($attribute, $requireMessage, $rule);
+                $validateRule->isCustomValidator = !!$customValidator;
 
                 if ($isMaxMin) {
-                    $validateRule->maxMinMessage   = $this->formatMessage($attribute, $maxMinMessage, $rule);
+                    $validateRule->maxMinMessage = $this->formatMessage($attribute, $maxMinMessage, $rule);
                 }
 
                 $validateRules[] = $validateRule;
